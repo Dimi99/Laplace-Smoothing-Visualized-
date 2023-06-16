@@ -1,5 +1,7 @@
 # Laplacian Smoothing Visualized
-
+This repository contains C++ code that:
+- #### 1. Renders meshes such as the Stanford Bunny using OpenGL
+- #### 2. Visualizes the process of explicit Laplacian Smoothing by only smoothing one vertex per frame.
 ## 3D-Render of Meshes using OpenGL: 
 https://github.com/Dimi99/Laplace-Smoothing-Visualized-/assets/73211787/e962ddc1-2eda-47c6-be93-e50f883875cb
 
