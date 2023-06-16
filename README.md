@@ -7,4 +7,4 @@ https://github.com/Dimi99/Laplace-Smoothing-Visualized-/assets/73211787/aaf29db7
 
 
 
-![Screenshot](Standford_Bunny.gif)
+![GIF](Standford_Bunny.gif)
