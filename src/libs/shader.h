@@ -1,4 +1,10 @@
-#include <glm/glm.hpp>
+
+#if(WIN32)
+#include "../libs/glm/glm/glm.hpp"
+
+#else
+#include "glm/glm.hpp"
+#endif
 
 #include <string>
 #include <fstream>

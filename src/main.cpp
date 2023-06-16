@@ -8,6 +8,7 @@
 #include "util.h"
 #include "camera.h"
 
+#define _USE_MATH_DEFINES
 typedef OpenMesh::TriMesh_ArrayKernelT<>  MyMesh;
 static const int SRC_WIDTH = 1200;
 static const int SRC_HEIGHT = 800;
@@ -66,8 +67,15 @@ int main(int argc, char** argv) {
     glDepthFunc(GL_LESS);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
+#if(WIN32)
+    Shader faceShader("../../../src/shader.vs", "../../../src/shader.fs");
+    Shader edgeShader("../../../src/edge_shader.vs", "../../../src/edge_shader.fs");
+#else   
     Shader faceShader("../src/shader.vs", "../src/shader.fs");
     Shader edgeShader("../src/edge_shader.vs", "../src/edge_shader.fs");
+
+#endif
+
 
 
     MyMesh  mesh;

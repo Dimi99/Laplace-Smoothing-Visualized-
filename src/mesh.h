@@ -3,8 +3,18 @@
 
 #include "glad/glad.h" // holds all OpenGL type declarations
 
+
+
+
+#if(WIN32)
+#include "../libs/glm/glm/glm.hpp"
+#include "../libs/glm/glm/gtc/matrix_transform.hpp"
+
+
+#else
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#endif
 
 #include "shader.h"
 #include <string>
