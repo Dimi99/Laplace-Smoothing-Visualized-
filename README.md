@@ -3,4 +3,7 @@
 3D-Render of Meshes using OpenGL: 
 
 
-https://github.com/Dimi99/Laplace-Smoothing-Visualized-/assets/73211787/aaf29db7-f4cb-439b-882a-c3af830bc5d5
+
+
+https://github.com/Dimi99/Laplace-Smoothing-Visualized-/assets/73211787/e962ddc1-2eda-47c6-be93-e50f883875cb
+
