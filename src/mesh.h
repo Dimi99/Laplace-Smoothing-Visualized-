@@ -142,22 +142,15 @@ private:
 };
 
 
-Mesh model_to_mesh(const std::string& path){
-    MyMesh  mesh;
-    if ( ! OpenMesh::IO::read_mesh(mesh,path))
-    {
-        std::cerr << "Error loading mesh from file " << path << std::endl;
-    }
+Mesh model_to_mesh( MyMesh& mesh){
     auto points = OpenMesh::getPointsProperty(mesh);
+    auto edits = OpenMesh::VProp<float>(mesh, "edit");
     //auto faces = OpenMesh::makePropertyManagerFromExistingOrNew(mesh,"face",)
 
     std::vector<Vertex> vertices;
     std::vector<unsigned int> edges;
     std::vector<unsigned int> indices;
-    mesh.request_face_normals();  // Request vertex normals
-    mesh.update_face_normals();
-    mesh.request_vertex_normals();  // Request vertex normals
-    mesh.update_vertex_normals();
+
 
 
     for(auto vh: mesh.vertices()){
@@ -169,6 +162,7 @@ Mesh model_to_mesh(const std::string& path){
         vector.z = points(vh)[2];
         vertex.Position = vector;
         vertex.Normal = glm::vec3(mesh.normal(vh)[0],mesh.normal(vh)[1],mesh.normal(vh)[2]);
+        vertex.edit = edits[vh];
         vertices.push_back(vertex);
     }
 

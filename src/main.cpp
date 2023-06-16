@@ -25,7 +25,7 @@ float lastFrame = 0.0f;
 auto fpsCount = 0;
 auto m_lastFPSDisplayTimestamp = glfwGetTime();
 
-glm::vec3 lightPos(0.8f, 1.0f, 0.9f);
+glm::vec3 lightPos(0.4f, 1.0f, 1.2f);
 
 
 
@@ -62,19 +62,52 @@ int main(int argc, char** argv) {
     Shader edgeShader("../src/edge_shader.vs", "../src/edge_shader.fs");
 #endif
 
-    Mesh obj = model_to_mesh(path);
-    int i = 0;
-    int j = 0;
+    MyMesh  mesh;
+    if ( ! OpenMesh::IO::read_mesh(mesh,path))
+    {
+        std::cerr << "Error loading mesh from file " << path << std::endl;
+    }
+
+    mesh.request_face_normals();  // Request vertex normals
+    mesh.update_face_normals();
+    mesh.request_vertex_normals();  // Request vertex normals
+    mesh.update_vertex_normals();
+    auto edit = OpenMesh::VProp<float>(mesh,"edit");
+
+    Mesh obj = model_to_mesh(mesh);
+
+    auto vertex_iter = mesh.vertices().begin();
+
     while (!glfwWindowShouldClose(window))
     {
         auto m_currentFrameTimestamp = glfwGetTime();
 
-        if ((m_currentFrameTimestamp - m_lastFPSDisplayTimestamp) >= 0.00001) {
-            obj.update_buffer();
-            //obj.vertices.at(i).edit = 0.0f;
-            //obj.vertices.at(++i).edit = 1.0f;
-            m_lastFPSDisplayTimestamp = m_currentFrameTimestamp;
+        if ((m_currentFrameTimestamp - m_lastFPSDisplayTimestamp) >= 0.001) {
+            MyMesh::Scalar valence(0.0);
 
+            MyMesh::Point  cog = MyMesh::Point(0.0, 0.0, 0.0);
+            for (auto vv_it=mesh.vv_iter(*vertex_iter); vv_it.is_valid(); ++vv_it)
+            {
+                cog += mesh.point( *vv_it );
+                ++valence;
+            }
+            cog /= valence;
+
+            if (!mesh.is_boundary(*vertex_iter))
+                mesh.set_point( *vertex_iter, cog);
+
+            edit[*vertex_iter] += 0.2f;
+            //auto pv = std::prev(vertex_iter, 1);
+            //edit[*pv] = 0.0f;
+            obj = model_to_mesh(mesh);
+            obj.update_buffer();
+            m_lastFPSDisplayTimestamp = m_currentFrameTimestamp;
+            if(vertex_iter != mesh.vertices_end())
+                vertex_iter++;
+            else
+                vertex_iter = mesh.vertices_begin();
+
+            m_lastFPSDisplayTimestamp = m_currentFrameTimestamp;
         }
 
         float currentFrame = static_cast<float>(glfwGetTime());
@@ -97,8 +130,8 @@ int main(int argc, char** argv) {
 
         // render the loaded model
         glm::mat4 model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(0.0f,  -1.0f, 0.0f));
-        model = glm::rotate(model, (float)glfwGetTime()/2, glm::vec3(0.0f, 1.0f, 0.0f)); // where x, y, z is axis of rotation (e.g. 0 1 0)
+        model = glm::translate(model, glm::vec3(0.0f,  -1.0f, 0.5f));
+        model = glm::rotate(model, -0.2f, glm::vec3(0.0f, 1.0f, 0.0f)); // where x, y, z is axis of rotation (e.g. 0 1 0)
         model = glm::scale(model, glm::vec3(10.0f, 10.0f, 10.0f));
         faceShader.setMat4("model", model);
         glEnable(GL_POLYGON_OFFSET_FILL);
