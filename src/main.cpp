@@ -74,7 +74,8 @@ int main(int argc, char** argv) {
     mesh.update_vertex_normals();
     auto edit = OpenMesh::VProp<float>(mesh,"edit");
 
-    Mesh obj = model_to_mesh(mesh);
+    Mesh obj(mesh);
+    int iteration = 0;
 
     auto vertex_iter = mesh.vertices().begin();
 
@@ -82,7 +83,7 @@ int main(int argc, char** argv) {
     {
         auto m_currentFrameTimestamp = glfwGetTime();
 
-        if ((m_currentFrameTimestamp - m_lastFPSDisplayTimestamp) >= 0.001) {
+        if((m_currentFrameTimestamp - m_lastFPSDisplayTimestamp) >= 0.001){
             MyMesh::Scalar valence(0.0);
 
             MyMesh::Point  cog = MyMesh::Point(0.0, 0.0, 0.0);
@@ -99,13 +100,15 @@ int main(int argc, char** argv) {
             edit[*vertex_iter] += 0.2f;
             //auto pv = std::prev(vertex_iter, 1);
             //edit[*pv] = 0.0f;
-            obj = model_to_mesh(mesh);
-            obj.update_buffer();
+             obj = Mesh(mesh);
             m_lastFPSDisplayTimestamp = m_currentFrameTimestamp;
             if(vertex_iter != mesh.vertices_end())
                 vertex_iter++;
-            else
+            else {
                 vertex_iter = mesh.vertices_begin();
+                std::cout << "Iteration: " << iteration << "\n";
+                ++iteration;
+            }
 
             m_lastFPSDisplayTimestamp = m_currentFrameTimestamp;
         }

@@ -41,15 +41,89 @@ public:
     std::vector<unsigned int> edges;
     unsigned int VAO{};
     unsigned int VAO_EDGE{};
-    Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<unsigned> edges)
+    Mesh(MyMesh& mesh)
     {
-        this->vertices = std::move(vertices);
-        this->indices = std::move(indices);
-        this->edges = std::move(edges);
+        auto points = OpenMesh::getPointsProperty(mesh);
+        auto edits = OpenMesh::VProp<float>(mesh, "edit");
+        //auto faces = OpenMesh::makePropertyManagerFromExistingOrNew(mesh,"face",)
 
-        // now that we have all the required data, set the vertex buffers and its attribute pointers.
+
+        for(auto &vh: mesh.vertices()){
+            Vertex vertex{};
+            glm::vec3 vector;
+            // positions
+            vector.x = points(vh)[0];
+            vector.y = points(vh)[1];
+            vector.z = points(vh)[2];
+            vertex.Position = vector;
+            vertex.Normal = glm::vec3(mesh.normal(vh)[0],mesh.normal(vh)[1],mesh.normal(vh)[2]);
+            vertex.edit = edits[vh];
+            vertices.push_back(vertex);
+        }
+
+        indices.reserve(mesh.n_faces() * 3);
+        for (MyMesh::FaceIter f_it=mesh.faces_begin(); f_it!=mesh.faces_end(); ++f_it)
+        {
+            for (MyMesh::FaceVertexIter vv_it=mesh.fv_iter(*f_it); vv_it.is_valid(); ++vv_it)
+                indices.push_back(vv_it->idx());
+        }
+        edges.reserve(mesh.n_edges()*3);
+        // Traverse all edges in the mesh
+        for (MyMesh::EdgeIter edge_it = mesh.edges_begin(); edge_it != mesh.edges_end(); ++edge_it)
+        {
+            // Get one of the halfedges of the current edge
+            MyMesh::HalfedgeHandle halfedge_handle = mesh.halfedge_handle(*edge_it, 0);
+
+            // Get the vertex indices of the halfedge endpoints
+            unsigned vertexIndex1 = mesh.to_vertex_handle(halfedge_handle).idx();
+            //unsigned vertexIndex2 = mesh.to_vertex_handle(mesh.next_halfedge_handle(halfedge_handle)).idx();
+            unsigned vertexIndex2 = mesh.from_vertex_handle(halfedge_handle).idx();
+
+            edges.push_back(vertexIndex1);
+            edges.push_back(vertexIndex2);
+        }
+
         setupMesh();
     }
+
+    ~Mesh(){
+        glDeleteVertexArrays(1, &VAO);
+        glDeleteVertexArrays(1, &VAO_EDGE);
+        glDeleteBuffers(1, &VBO);
+        glDeleteBuffers(1, &VBO_EDGE);
+        glDeleteBuffers(1, &EBO);
+        glDeleteBuffers(1, &EBO_EDGE);
+
+    }
+
+    Mesh& operator=(Mesh const& other)
+    {
+        if(this == &other)
+            return *this;
+        vertices = other.vertices;
+        edges = other.edges;
+        indices = other.indices;
+
+
+        glDeleteVertexArrays(1, &VAO);
+        glDeleteVertexArrays(1, &VAO_EDGE);
+        glDeleteBuffers(1, &VBO);
+        glDeleteBuffers(1, &VBO_EDGE);
+        glDeleteBuffers(1, &EBO);
+        glDeleteBuffers(1, &EBO_EDGE);
+
+        this->VAO = other.VAO;
+        this->VAO_EDGE = other.VAO_EDGE;
+        this->VBO = other.VBO;
+        this->VBO_EDGE = other.VBO_EDGE;
+        this->EBO = other.EBO;
+        this ->EBO_EDGE = other.EBO_EDGE;
+        setupMesh();
+       return *this;
+    }
+
+
+
     void draw_faces(Shader &shader)
     {
         glBindVertexArray(VAO);
@@ -66,7 +140,6 @@ public:
     }
 
     void update_buffer(){
-
         glBindVertexArray(VAO);
         glBindBuffer(GL_ARRAY_BUFFER, VBO);
         glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), &vertices[0], GL_STATIC_DRAW);
@@ -92,10 +165,9 @@ public:
         glVertexAttribPointer(2, 1, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, edit));
     }
 
-private:
+protected:
     unsigned int VBO{}, EBO{};
     unsigned int VBO_EDGE{}, EBO_EDGE{};
-
 
     void setupMesh()
     {
@@ -139,56 +211,7 @@ private:
         glVertexAttribPointer(2, 1, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, edit));
 
     }
+
 };
 
-
-Mesh model_to_mesh( MyMesh& mesh){
-    auto points = OpenMesh::getPointsProperty(mesh);
-    auto edits = OpenMesh::VProp<float>(mesh, "edit");
-    //auto faces = OpenMesh::makePropertyManagerFromExistingOrNew(mesh,"face",)
-
-    std::vector<Vertex> vertices;
-    std::vector<unsigned int> edges;
-    std::vector<unsigned int> indices;
-
-
-
-    for(auto vh: mesh.vertices()){
-        Vertex vertex{};
-        glm::vec3 vector;
-        // positions
-        vector.x = points(vh)[0];
-        vector.y = points(vh)[1];
-        vector.z = points(vh)[2];
-        vertex.Position = vector;
-        vertex.Normal = glm::vec3(mesh.normal(vh)[0],mesh.normal(vh)[1],mesh.normal(vh)[2]);
-        vertex.edit = edits[vh];
-        vertices.push_back(vertex);
-    }
-
-    indices.reserve(mesh.n_faces() * 3);
-    for (MyMesh::FaceIter f_it=mesh.faces_begin(); f_it!=mesh.faces_end(); ++f_it)
-    {
-        for (MyMesh::FaceVertexIter vv_it=mesh.fv_iter(*f_it); vv_it.is_valid(); ++vv_it)
-            indices.push_back(vv_it->idx());
-    }
-    edges.reserve(mesh.n_edges()*3);
-    // Traverse all edges in the mesh
-    for (MyMesh ::EdgeIter edge_it = mesh.edges_begin(); edge_it != mesh.edges_end(); ++edge_it)
-    {
-        // Get one of the halfedges of the current edge
-        MyMesh::HalfedgeHandle halfedge_handle = mesh.halfedge_handle(*edge_it, 0);
-
-        // Get the vertex indices of the halfedge endpoints
-        unsigned vertexIndex1 = mesh.to_vertex_handle(halfedge_handle).idx();
-        //unsigned vertexIndex2 = mesh.to_vertex_handle(mesh.next_halfedge_handle(halfedge_handle)).idx();
-        unsigned vertexIndex2 = mesh.from_vertex_handle(halfedge_handle).idx();
-
-        edges.push_back(vertexIndex1);
-        edges.push_back(vertexIndex2);
-    }
-
-
-    return {vertices,indices,edges};
-}
 #endif
